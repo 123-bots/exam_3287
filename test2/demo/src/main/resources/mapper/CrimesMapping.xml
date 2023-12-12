@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.dao.CrimeDao">
+    <select id="getCrimesRank" resultType="CrimesRank">
+        select city, avg(incidents) * 0.8 + avg(victims) * 0.2 as risk_index
+        from (
+                 select city, count(*) as incidents, sum(victims) as victims
+                 from `crimes`
+                 where year(start_date_time) =#{year}
+                 group by city, day(start_date_time)
+             ) as daily_data
+        group by city
+        order by risk_index desc
+            limit 3
+    </select>
+
+    <insert id="insertCrime" parameterType="Crimes">
+        <selectKey keyProperty="id" order="AFTER" resultType="int">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into crimes (offence_code, victims, city,dispatch_time,start_date_time)
+        values (#{offence_code,jdbcType=INTEGER},#{victims,jdbcType=INTEGER},#{city,jdbcType=VARCHAR},
+            #{dispatch_time,jdbcType=datetime}, #{start_date_time,jdbcType=DATETIME}})
+    </insert>
+</mapper>
+
